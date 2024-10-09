@@ -1,38 +1,32 @@
-use std::fs::File,
+use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, stdin};
 
 extern crate clap;
 use clap::{Command, Arg};
 
-fn read_text_file_lines<R: Read>(reader: R) -> Result<Vec<String>, io::Error> {
-    let reader = BufReader::new(reader);
-
-    let mut lines = Vec::new();
-    for line in reader.lines() {
-        let line = line?;
-        lines.push(line);
-    }
-
-    Ok(lines)
-}
-
-fn process_csv(fasta_filename: &str, prefix: &str) {
+fn process_csv(file_path: &str, prefix: &str) -> Result<(), Box<dyn std::error::Error>>{
     // Switch to start converting to PED
-    let mut start_parsing: bool = false
+    let mut start_parsing: bool = false;
 
     // Input readers, accepting either a file or stdin
-    let reader: Box<dyn Read> = if let Some(file_path) = std::env::args().nth(1) {
-        Box::new(BufReader::new(File::open(file_path)?))
-    } else {
+    let reader: Box<dyn Read> = if file_path == "-" {
         Box::new(stdin().lock())
+    } else {
+        let file = File::open(file_path)?
+        Box::new(BufReader::new(file))
     };
+    let reader = BufReader::new(reader);
 
-    for line in read_text_file_lines(fasta_filename){
-        if !l.is_empty() {
-            println!("{}", l);
+    for line in reader.lines(){
+        let line = line?;
+        if !line.is_empty(){
+            let split_line = line.split(' ');
         }
     }
+
+    Ok(())
 }
+
 
 fn main() {
     let matches = Command::new("fastix")
@@ -59,7 +53,7 @@ fn main() {
 
     let prefix = matches.get_one::<String>("OUTPUT").unwrap();
 
-    process_csv(filename, prefix)
+    process_csv(filename, prefix);
 
     println!("Hello, world!");
 }
