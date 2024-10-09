@@ -12,8 +12,7 @@ fn process_csv(file_path: &str, prefix: &str) -> Result<(), Box<dyn std::error::
     let reader: Box<dyn Read> = if file_path == "-" {
         Box::new(stdin().lock())
     } else {
-        let file = File::open(file_path)?
-        Box::new(BufReader::new(file))
+        Box::new(BufReader::new(File::open(file_path)?))
     };
     let reader = BufReader::new(reader);
 
