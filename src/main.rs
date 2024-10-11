@@ -37,8 +37,9 @@ fn process_csv(
     // Index of key columns
     let mut a1_index: usize = 4;
     let mut a2_index: usize = 5;
-    let mut sample_index: usize = 0;
-    let mut snp_index: usize = 1;
+    let mut sample_col_index: usize = 0;
+    let mut snp_col_index: usize = 1;
+    let mut site_idx: usize = 0;
     // Create output files
     let mut pedfile = File::create(format!("{out_root}.ped"))?;
     let mut mapfile = File::create(format!("{out_root}.map"))?;
@@ -78,7 +79,7 @@ fn process_csv(
                     println!("Found {} sites", num_sites);
                 }
             } else {
-                if line.contains("Sample Name") {
+                if line.to_lowercase().contains("sample name") || line.to_lowercase().contains("sample id") {
                     let a1_name = get_valid_column_id(coding, "1").unwrap();
                     let a2_name = get_valid_column_id(coding, "2").unwrap();
 
@@ -97,26 +98,27 @@ fn process_csv(
                         .iter()
                         .position(|&value| value == a2_name)
                         .unwrap();
-                    sample_index = split_line
+                    sample_col_index = split_line
                         .iter()
-                        .position(|&value| value == "Sample Name")
+                        .position(|&value| value.to_lowercase() == "sample name" || value.to_lowercase() == "sample id")
                         .unwrap();
-                    snp_index = split_line
+                    snp_col_index = split_line
                         .iter()
-                        .position(|&value| value == "SNP Index")
+                        .position(|&value| value.to_lowercase() == "snp index" || value.to_lowercase() == "snp name")
                         .unwrap();
 
-                    println!("Desired column {} has index {}", a1_name, a1_index);
-                    println!("Desired column {} has index {}", a2_name, a2_index);
+                    println!("Columns for coding {} found.", coding)
                 } else {
-                    let local_sample = split_line[sample_index].to_string();
-                    if !variants.contains(&split_line[snp_index].to_string()) {
-                        variants.push(split_line[snp_index].to_string())
+                    let local_sample = split_line[sample_col_index].to_string();
+                    let local_var = split_line[snp_col_index].to_string();
+                    if !variants.contains(&local_var) {
+                        variants.push(local_var)
                     }
                     if sample_name.is_none() {
                         sample_name = Some(local_sample.clone());
                         genotypes = Vec::with_capacity(num_alleles as usize);
                     } else if sample_name.as_ref().unwrap() != &local_sample {
+                        site_idx = 0;
                         let sample = sample_name.take().unwrap();
                         writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "))?;
                         sample_name = Some(local_sample.clone());
@@ -125,8 +127,7 @@ fn process_csv(
 
                     let a1: String = split_line[a1_index].to_string().replace("-", "0");
                     let a2: String = split_line[a2_index].to_string().replace("-", "0");
-                    let site_idx: i64 = split_line[snp_index].parse().unwrap();
-                    let a1_pos: usize = ((site_idx - 1) * 2) as usize;
+                    let a1_pos: usize = ((site_idx) * 2) as usize;
                     let a2_pos: usize = a1_pos + 1;
 
                     if a1_pos < genotypes.len() {
@@ -140,6 +141,7 @@ fn process_csv(
                     } else {
                         genotypes.insert(a2_pos, a2);
                     }
+                    site_idx += 1;
                 }
             }
         }
@@ -150,7 +152,7 @@ fn process_csv(
     }
     // Save the map file
     for site in variants {
-        writeln!(mapfile, "0 {site} 0 0")?;
+        writeln!(mapfile, "0\t{site}\t0\t0")?;
     }
     Ok(())
 }
