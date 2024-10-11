@@ -11,19 +11,18 @@ env:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          build: [beta, stable, windows, macos]
-          include:
-            - build: macos
-              os: macos-latest
-            - build: windows
-              os: windows-latest
-            - build: stable
-              os: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [beta, stable, windows, macos]
+        include:
+          - build: macos
+            os: macos-latest
+          - build: windows
+            os: windows-latest
+          - build: stable
+            os: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Build
