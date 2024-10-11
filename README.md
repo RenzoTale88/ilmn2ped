@@ -25,3 +25,7 @@ The acceptable codings are:
 5. `ab`
 
 The coding has to be present in the input dataset, with the script failing if it won't be able to find it.
+To find out more details about the coding system of Illumina SNP array refer to the Illumina [website](https://knowledge.illumina.com/microarray/general/microarray-general-reference_material-list/000001489).
+
+## License
+This project is licensed under the MIT license. See [LICENSE](./LICENSE) for more details.
