@@ -1,14 +1,37 @@
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Read, stdin};
+use std::io::{BufRead, BufReader, Read, stdin};
 
 extern crate clap;
 use clap::{Command, Arg};
 
-fn process_csv(file_path: &str, prefix: &str) -> Result<(), Box<dyn std::error::Error>>{
+// Validate coding provided
+fn get_valid_column_id(coding: &str, allele: &str) -> Result<String, String> {
+    let colname = match coding {
+        "forward" => format!("Allele{} - Forward", allele),
+        "reverse" => format!("Allele{} - Reverse", allele),
+        "top" => format!("Allele{} - Top", allele),
+        "bottom" => format!("Allele{} - Bottom", allele),
+        "ab" => format!("Allele{} - AB", allele),
+        _ => String::from("invalid")
+    };
+    if colname == "invalid"{
+        Err(String::from("Invalid coding provided"))
+    } else {
+        Ok(colname)
+    }
+}
+
+fn process_csv(file_path: &str, coding: &str) -> Result<(), Box<dyn std::error::Error>>{
     // Switch to start converting to PED
     let mut start_parsing: bool = false;
-    let mut a1_index: u8;
-    let mut a2_index: u8;
+    // Currently analysed sample name
+    let mut sample_name: Option<String> = None;
+    let mut num_alleles: i64 = 0;
+    let mut genotypes: Vec<String> = vec![];
+    let mut a1_index: usize = 4;
+    let mut a2_index: usize = 5;
+    let mut sample_index: usize = 0;
+    let mut snp_index: usize = 1;
 
     // Input readers, accepting either a file or stdin
     let reader: Box<dyn Read> = if file_path == "-" {
@@ -21,16 +44,72 @@ fn process_csv(file_path: &str, prefix: &str) -> Result<(), Box<dyn std::error::
     for line in reader.lines(){
         let line = line?;
         if !line.is_empty(){
-            if line.contains("[input]") {
+            let split_line: Vec<&str> = line.split(',').collect();
+
+            if line.contains("[Header]") {
                 continue;
-            } else if line.contains("[data]") {
+            } else if line.contains("[Data]") {
                 start_parsing = true;
             } else if !start_parsing {
-                let split_line = line.split('=');
-                let split_line: Vec<&str> = split_line.collect();
                 let key = split_line[0];
-                let val: i64 = split_line[1].parse().unwrap();
-                println!("{}: {}", key, val);
+                if key == "Num SNPs"{
+                    let num_sites: i64 = split_line[1].parse().unwrap();
+                    num_alleles = num_sites * 2;
+                    println!("Found {} sites", num_sites);
+                }
+                // if key == "Num Samples"{
+                //     num_inds = split_line[1].parse().unwrap();
+                //     println!("Found {} samples", num_inds);
+                // }
+            } else {
+                // Extract valid columns IDs and indexes.
+                if line.contains("Sample Name"){
+                    let a1_name = get_valid_column_id(coding, "1").unwrap();
+                    let a2_name = get_valid_column_id(coding, "2").unwrap();
+
+                    if !split_line.contains(&a1_name.as_str()){
+                        panic!("Column \"{}\" not found", a1_name)
+                    }
+                    if !split_line.contains(&a2_name.as_str()){
+                        panic!("Column \"{}\" not found", a2_name)
+                    }
+
+                    a1_index = split_line.iter().position(|&value| value == a1_name).unwrap();
+                    a2_index = split_line.iter().position(|&value| value == a2_name).unwrap();
+                    sample_index = split_line.iter().position(|&value| value == "Sample name").unwrap();
+                    snp_index = split_line.iter().position(|&value| value == "SNP index").unwrap();
+
+                    println!("Desired column {} has index {}", a1_name, a1_index);
+                    println!("Desired column {} has index {}", a2_name, a2_index);
+                } else {
+                    let local_sample = Some(split_line[sample_index].to_string());
+                    if sample_name.is_none() {
+                        sample_name = local_sample;
+                        genotypes = Vec::with_capacity(num_alleles as usize);
+                        let a1: String = split_line[a1_index].to_string();
+                        let a2: String = split_line[a2_index].to_string();
+                        let site_idx: i64 = split_line[snp_index].parse().unwrap();
+                        let a1_pos: usize = ((site_idx-1) * 2) as usize;
+                        let a2_pos: usize = a1_pos + 1;
+                        genotypes[a1_pos] = a1;
+                        genotypes[a2_pos] = a2;
+                    } else {
+                        if sample_name.unwrap() != split_line[sample_index]{
+                            let sample = sample_name.unwrap();
+                            println!("{sample} {sample} 0 0 -9 {:?}", genotypes);
+                            sample_name = Some(split_line[sample_index].to_string());
+                            genotypes = Vec::with_capacity(num_alleles as usize);
+                        }
+                        let a1: String = split_line[a1_index].to_string();
+                        let a2: String = split_line[a2_index].to_string();
+                        let site_idx: i64 = split_line[snp_index].parse().unwrap();
+                        let a1_pos: usize = ((site_idx-1) * 2) as usize;
+                        let a2_pos: usize = a1_pos + 1;
+                        genotypes[a1_pos] = a1;
+                        genotypes[a2_pos] = a2;
+
+                    }
+                }
             }
         }
     }
@@ -51,20 +130,29 @@ fn main() {
                 .help("input CSV file"),
         )
         .arg(
+            Arg::new("CODING")
+            .short('c')
+            .long("coding")
+            .required(false)
+            .num_args(1)
+            .default_value("top")
+            .help("Desired allele coding"),
+        )
+        .arg(
             Arg::new("OUTPUT")
-                .required(false)
-                .short('o')
-                .long("output")
-                .num_args(1)
-                .help("Output file prefix")
-                .default_value("None"),
+            .required(false)
+            .short('o')
+            .long("output")
+            .num_args(1)
+            .help("Output file prefix")
+            .default_value("None"),
         )
         .get_matches();
 
     let filename = matches.get_one::<String>("INPUT").unwrap();
+    let coding = matches.get_one::<String>("CODING").unwrap();
+    let _prefix = matches.get_one::<String>("OUTPUT").unwrap();
 
-    let prefix = matches.get_one::<String>("OUTPUT").unwrap();
-
-    process_csv(filename, prefix);
+    process_csv(filename, coding);
 
 }
