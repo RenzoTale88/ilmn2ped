@@ -79,7 +79,9 @@ fn process_csv(
                     println!("Found {} sites", num_sites);
                 }
             } else {
-                if line.to_lowercase().contains("sample name") || line.to_lowercase().contains("sample id") {
+                if line.to_lowercase().contains("sample name")
+                    || line.to_lowercase().contains("sample id")
+                {
                     let a1_name = get_valid_column_id(coding, "1").unwrap();
                     let a2_name = get_valid_column_id(coding, "2").unwrap();
 
@@ -100,11 +102,17 @@ fn process_csv(
                         .unwrap();
                     sample_col_index = split_line
                         .iter()
-                        .position(|&value| value.to_lowercase() == "sample name" || value.to_lowercase() == "sample id")
+                        .position(|&value| {
+                            value.to_lowercase() == "sample name"
+                                || value.to_lowercase() == "sample id"
+                        })
                         .unwrap();
                     snp_col_index = split_line
                         .iter()
-                        .position(|&value| value.to_lowercase() == "snp index" || value.to_lowercase() == "snp name")
+                        .position(|&value| {
+                            value.to_lowercase() == "snp index"
+                                || value.to_lowercase() == "snp name"
+                        })
                         .unwrap();
 
                     println!("Columns for coding {} found.", coding)
@@ -120,7 +128,11 @@ fn process_csv(
                     } else if sample_name.as_ref().unwrap() != &local_sample {
                         site_idx = 0;
                         let sample = sample_name.take().unwrap();
-                        writeln!(pedfile, "{sample} {sample} 0 0 0 -9 {}", genotypes.join(" "))?;
+                        writeln!(
+                            pedfile,
+                            "{sample} {sample} 0 0 0 -9 {}",
+                            genotypes.join(" ")
+                        )?;
                         sample_name = Some(local_sample.clone());
                         genotypes = Vec::with_capacity(num_alleles as usize);
                     }
@@ -148,7 +160,11 @@ fn process_csv(
     }
     // Save the last line to the output file
     if let Some(sample) = sample_name {
-        writeln!(pedfile, "{sample} {sample} 0 0 0 -9 {}", genotypes.join(" "))?;
+        writeln!(
+            pedfile,
+            "{sample} {sample} 0 0 0 -9 {}",
+            genotypes.join(" ")
+        )?;
     }
     // Save the map file
     for site in variants {
@@ -157,7 +173,7 @@ fn process_csv(
     Ok(())
 }
 
-fn main(){
+fn main() {
     let matches = Command::new("ilmn2ped")
         .version("0.1.0")
         .author("Andrea Talenti <andrea.talenti@ed.ac.uk>")
