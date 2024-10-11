@@ -120,7 +120,7 @@ fn process_csv(
                     } else if sample_name.as_ref().unwrap() != &local_sample {
                         site_idx = 0;
                         let sample = sample_name.take().unwrap();
-                        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "))?;
+                        writeln!(pedfile, "{sample} {sample} 0 0 0 -9 {}", genotypes.join(" "))?;
                         sample_name = Some(local_sample.clone());
                         genotypes = Vec::with_capacity(num_alleles as usize);
                     }
@@ -148,7 +148,7 @@ fn process_csv(
     }
     // Save the last line to the output file
     if let Some(sample) = sample_name {
-        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "))?;
+        writeln!(pedfile, "{sample} {sample} 0 0 0 -9 {}", genotypes.join(" "))?;
     }
     // Save the map file
     for site in variants {
