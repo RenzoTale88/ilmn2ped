@@ -1,0 +1,16 @@
+[Header]
+GSGT Version	2.0.0
+Processing Date	09/10/2024 00:00AM
+Content		dat.bpm
+Num SNPs	3
+Total SNPs	3
+Num Samples	2
+Total Samples	2
+[Data]
+Sample Name	SNP Index	GC Score	GT Score	Allele1 - Top	Allele2 - Top	Allele1 - Forward	Allele2 - Forward	Allele1 - Design	Allele2 - Design	Allele1 - AB	Allele2 - AB	Theta	R	X	Y
+S1	1	0.9	0.9	C	C	C	C	C	C	B	B	0.9	1.01	0.9	0.9
+S1	2	0.8	0.8	A	T	A	T	A	G	A	B	0.9	1.01	0.9	0.9
+S1	3	0.9	0.9	-	-	-	-	-	-	-	-	0.9	1.01	0.9	0.9
+S2	1	0.9	0.9	A	A	A	A	T	T	A	A	0.9	1.01	0.9	0.9
+S2	2	0.9	0.9	T	T	T	T	G	G	B	B	0.9	1.01	0.9	0.9
+S2	3	0.9	0.9	A	A	A	A	A	A	A	A	0.9	1.01	0.9	0.9
