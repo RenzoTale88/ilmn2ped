@@ -118,7 +118,7 @@ fn process_csv(
                         genotypes = Vec::with_capacity(num_alleles as usize);
                     } else if sample_name.as_ref().unwrap() != &local_sample {
                         let sample = sample_name.take().unwrap();
-                        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "));
+                        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "))?;
                         sample_name = Some(local_sample.clone());
                         genotypes = Vec::with_capacity(num_alleles as usize);
                     }
@@ -146,16 +146,16 @@ fn process_csv(
     }
     // Save the last line to the output file
     if let Some(sample) = sample_name {
-        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "));
+        writeln!(pedfile, "{sample} {sample} 0 0 -9 {}", genotypes.join(" "))?;
     }
     // Save the map file
     for site in variants {
-        writeln!(mapfile, "0 {site} 0 0");
+        writeln!(mapfile, "0 {site} 0 0")?;
     }
     Ok(())
 }
 
-fn main() {
+fn main(){
     let matches = Command::new("ilmn2ped")
         .version("0.1.0")
         .author("Andrea Talenti <andrea.talenti@ed.ac.uk>")
@@ -191,5 +191,5 @@ fn main() {
     let coding = matches.get_one::<String>("CODING").unwrap();
     let prefix = matches.get_one::<String>("OUTPUT").unwrap();
 
-    process_csv(filename, coding, prefix);
+    let _ = process_csv(filename, coding, prefix);
 }
