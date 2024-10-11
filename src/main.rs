@@ -183,7 +183,7 @@ fn main(){
                 .long("output")
                 .num_args(1)
                 .help("Output file prefix")
-                .default_value("None"),
+                .default_value("output"),
         )
         .get_matches();
 
