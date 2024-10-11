@@ -1,0 +1,16 @@
+[Header]
+GSGT Version	2.0.0
+Processing Date	09/10/2024 00:00AM
+Content		dat.bpm
+Num SNPs	3
+Total SNPs	3
+Num Samples	2
+Total Samples	2
+[Data]
+SNP Name	Sample ID	Allele1 - Forward	Allele2 - Forward	Allele1 - Top	Allele2 - Top	Allele1 - AB	Allele2 - AB	GC Score	X	Y
+snp01	S1	C	C	C	C	B	B	0.9	1.01	0.9	
+snp02	S1	A	T	A	T	A	B	0.9	1.01	0.9
+snp03	S1	-	-	-	-	-	-	0.9	1.01	0.9
+snp01	S2	A	A	T	T	A	A	0.9	1.01	0.9
+snp02	S2	T	T	G	G	B	B	0.9	1.01	0.9
+snp03	S2	A	A	A	A	A	A	0.9	1.01	0.9
