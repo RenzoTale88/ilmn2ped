@@ -1,8 +1,8 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read, stdin, Write};
+use std::io::{stdin, BufRead, BufReader, Read, Write};
 
 extern crate clap;
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 
 // Validate coding provided
 fn get_valid_column_id(coding: &str, allele: &str) -> Result<String, String> {
@@ -12,16 +12,20 @@ fn get_valid_column_id(coding: &str, allele: &str) -> Result<String, String> {
         "top" => format!("Allele{} - Top", allele),
         "bottom" => format!("Allele{} - Bottom", allele),
         "ab" => format!("Allele{} - AB", allele),
-        _ => String::from("invalid")
+        _ => String::from("invalid"),
     };
-    if colname == "invalid"{
+    if colname == "invalid" {
         Err(String::from("Invalid coding provided"))
     } else {
         Ok(colname)
     }
 }
 
-fn process_csv(file_path: &str, coding: &str, out_root: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn process_csv(
+    file_path: &str,
+    coding: &str,
+    out_root: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Start parsing the data
     let mut start_parsing: bool = false;
     // Sample names and number of expected alleles
@@ -53,7 +57,7 @@ fn process_csv(file_path: &str, coding: &str, out_root: &str) -> Result<(), Box<
         Box::new(BufReader::new(File::open(file_path)?))
     };
     let reader = BufReader::new(reader);
-    
+
     // Process the input file
     for line_result in reader.lines() {
         // Unpack the line
@@ -85,16 +89,28 @@ fn process_csv(file_path: &str, coding: &str, out_root: &str) -> Result<(), Box<
                         panic!("Column \"{}\" not found", a2_name);
                     }
 
-                    a1_index = split_line.iter().position(|&value| value == a1_name).unwrap();
-                    a2_index = split_line.iter().position(|&value| value == a2_name).unwrap();
-                    sample_index = split_line.iter().position(|&value| value == "Sample Name").unwrap();
-                    snp_index = split_line.iter().position(|&value| value == "SNP Index").unwrap();
+                    a1_index = split_line
+                        .iter()
+                        .position(|&value| value == a1_name)
+                        .unwrap();
+                    a2_index = split_line
+                        .iter()
+                        .position(|&value| value == a2_name)
+                        .unwrap();
+                    sample_index = split_line
+                        .iter()
+                        .position(|&value| value == "Sample Name")
+                        .unwrap();
+                    snp_index = split_line
+                        .iter()
+                        .position(|&value| value == "SNP Index")
+                        .unwrap();
 
                     println!("Desired column {} has index {}", a1_name, a1_index);
                     println!("Desired column {} has index {}", a2_name, a2_index);
                 } else {
                     let local_sample = split_line[sample_index].to_string();
-                    if !variants.contains(&split_line[snp_index].to_string()){
+                    if !variants.contains(&split_line[snp_index].to_string()) {
                         variants.push(split_line[snp_index].to_string())
                     }
                     if sample_name.is_none() {
@@ -153,21 +169,21 @@ fn main() {
         )
         .arg(
             Arg::new("CODING")
-            .short('c')
-            .long("coding")
-            .required(false)
-            .num_args(1)
-            .default_value("top")
-            .help("Desired allele coding"),
+                .short('c')
+                .long("coding")
+                .required(false)
+                .num_args(1)
+                .default_value("top")
+                .help("Desired allele coding"),
         )
         .arg(
             Arg::new("OUTPUT")
-            .required(false)
-            .short('o')
-            .long("output")
-            .num_args(1)
-            .help("Output file prefix")
-            .default_value("None"),
+                .required(false)
+                .short('o')
+                .long("output")
+                .num_args(1)
+                .help("Output file prefix")
+                .default_value("None"),
         )
         .get_matches();
 
@@ -176,5 +192,4 @@ fn main() {
     let prefix = matches.get_one::<String>("OUTPUT").unwrap();
 
     process_csv(filename, coding, prefix);
-
 }
