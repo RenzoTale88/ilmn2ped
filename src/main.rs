@@ -1,9 +1,7 @@
 extern crate clap;
 use clap::{Arg, Command};
 
-mod map;
 mod report;
-use map::load_map;
 use report::process_csv;
 
 fn main() {
@@ -51,11 +49,10 @@ fn main() {
     let prefix = matches.get_one::<String>("OUTPUT").unwrap();
     let map = matches.get_one::<String>("MAP");
 
-    // Import a map if it is available
-    if let Some(map) = map {
-        let _variant_map = load_map(map);
-    }
-    
+    // // Import a map if it is available
+    // if let Some(map) = map {
+    //     let _variant_map = load_map(map);
+    // }
 
-    let _ = process_csv(filename, coding, prefix);
+    let _ = process_csv(filename, coding, prefix, map);
 }

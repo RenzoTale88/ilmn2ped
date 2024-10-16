@@ -1,6 +1,48 @@
+mod map;
+use map::{load_map, Site};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{stdin, BufRead, BufReader, Read, Write};
 
+// Define a function to validate the header.
+fn validate_header(header: Vec<&str>, coding: &str) -> Result<String, String> {
+
+    let a1_col = get_valid_column_id(coding, "1").unwrap();
+    let a2_col = get_valid_column_id(coding, "2").unwrap();
+    let has_a1_col: bool = header.contains(&a1_col.as_str());
+    let has_a2_col: bool = header.contains(&a2_col.as_str());
+    let has_allele_cols: bool = has_a1_col && has_a2_col;
+    let has_sample_col: bool = header.contains(&"Sample Name") || header.contains(&"Sample ID");
+    let too_many_sample_col: bool =
+        header.contains(&"Sample Name") && header.contains(&"Sample ID");
+    let has_snp_name: bool = header.contains(&"SNP Name");
+    let has_snp_index: bool = header.contains(&"SNP Index");
+    if has_allele_cols && has_sample_col && !too_many_sample_col && (has_snp_index || has_snp_name)
+    {
+        let result = if has_snp_index {
+            String::from("SNP Index")
+        } else {
+            String::from("SNP Name")
+        };
+        Ok(String::from(result))
+    } else if !has_allele_cols {
+        Err(String::from(
+            "Invalid header: missing \"Allele1\" or \"Allele2\" columns",
+        ))
+    } else if !too_many_sample_col {
+        Err(String::from(
+            "Invalid header: found both Sample Name or Sample ID columns",
+        ))
+    } else if !has_sample_col {
+        Err(String::from(
+            "Invalid header: missing Sample Name or Sample ID column",
+        ))
+    } else {
+        Err(String::from(
+            "Invalid header: missing SNP Index or SNP Name column",
+        ))
+    }
+}
 
 // Validate coding provided
 fn get_valid_column_id(coding: &str, allele: &str) -> Result<String, String> {
@@ -23,15 +65,21 @@ pub fn process_csv(
     file_path: &str,
     coding: &str,
     out_root: &str,
+    map: Option<&String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Start parsing the data
     let mut start_parsing: bool = false;
+    let mut parsed_header: bool = false;
     // Sample names and number of expected alleles
+    // Sample name can be null at the beginning, so that we can
+    // initialize it at the first line of the table.
     let mut sample_name: Option<String> = None;
     let mut num_alleles: i64 = 0;
     // Vectors of minimal informations
     let mut genotypes: Vec<String> = vec![];
     let mut variants: Vec<String> = vec![];
+    // Hashmap of positions to process, if map is provided
+    let mut site_metadata: Option<HashMap<String, Site>> = None;
     // Index of key columns
     let mut a1_index: usize = 4;
     let mut a2_index: usize = 5;
@@ -77,43 +125,42 @@ pub fn process_csv(
                     println!("Found {} sites", num_sites);
                 }
             } else {
-                if line.to_lowercase().contains("sample name")
-                    || line.to_lowercase().contains("sample id")
-                {
-                    let a1_name = get_valid_column_id(coding, "1").unwrap();
-                    let a2_name = get_valid_column_id(coding, "2").unwrap();
+                if !parsed_header {
+                    let validated = validate_header(split_line.clone(), coding);
+                    match validated {
+                        Ok(snp_col_name) => {
+                            // First, we validate the header
+                            let a1_name = get_valid_column_id(coding, "1").unwrap();
+                            let a2_name = get_valid_column_id(coding, "2").unwrap();
 
-                    if !split_line.contains(&a1_name.as_str()) {
-                        panic!("Column \"{}\" not found", a1_name);
-                    }
-                    if !split_line.contains(&a2_name.as_str()) {
-                        panic!("Column \"{}\" not found", a2_name);
-                    }
+                            // Get allele input columns
+                            a1_index = split_line
+                                .iter()
+                                .position(|&value| value == a1_name)
+                                .unwrap();
+                            a2_index = split_line
+                                .iter()
+                                .position(|&value| value == a2_name)
+                                .unwrap();
 
-                    a1_index = split_line
-                        .iter()
-                        .position(|&value| value == a1_name)
-                        .unwrap();
-                    a2_index = split_line
-                        .iter()
-                        .position(|&value| value == a2_name)
-                        .unwrap();
-                    sample_col_index = split_line
-                        .iter()
-                        .position(|&value| {
-                            value.to_lowercase() == "sample name"
-                                || value.to_lowercase() == "sample id"
-                        })
-                        .unwrap();
-                    snp_col_index = split_line
-                        .iter()
-                        .position(|&value| {
-                            value.to_lowercase() == "snp index"
-                                || value.to_lowercase() == "snp name"
-                        })
-                        .unwrap();
-
-                    println!("Columns for coding {} found.", coding)
+                            // Sample column index
+                            sample_col_index = split_line
+                                .iter()
+                                .position(|&value| value.to_lowercase().contains(&"sample"))
+                                .unwrap();
+                            // SNP column index
+                            snp_col_index = split_line
+                                .iter()
+                                .position(|&value| value.to_lowercase().contains(&snp_col_name))
+                                .unwrap();
+                            if !map.is_none() {
+                                site_metadata = Some(load_map(map.unwrap(), snp_col_name)?);
+                            };
+                        }
+                        Err(e) => panic!("{e}"),
+                    };
+                    println!("Columns for coding {} found.", coding);
+                    parsed_header = true;
                 } else {
                     let local_sample = split_line[sample_col_index].to_string();
                     let local_var = split_line[snp_col_index].to_string();
@@ -165,8 +212,17 @@ pub fn process_csv(
         )?;
     }
     // Save the map file
+    let mut chrom: String = String::from("0");
+    let mut pos: i64 = 0;
     for site in variants {
-        writeln!(mapfile, "0\t{site}\t0\t0")?;
+        match site_metadata {
+            Some(ref meta) => {
+                chrom = meta[&site].chromosome.clone();
+                pos = meta[&site].position.clone();
+            }
+            _ => {}
+        };
+        writeln!(mapfile, "{chrom}\t{site}\t0\t{pos}")?;
     }
     Ok(())
 }
