@@ -171,7 +171,6 @@ pub fn process_csv(
     // for line_result in reader.lines() {
         // Unpack the line
         reader.read_line(&mut line)?;
-        println!("{line}");
         if !line.is_empty() {
             let split_line: Vec<&str> = line.trim().split(delimiter).collect();
             let local_sample = split_line[sample_col_index].to_string();
