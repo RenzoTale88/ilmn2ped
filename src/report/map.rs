@@ -4,6 +4,7 @@ use std::io::{self, BufRead, BufReader};
 
 // Structure pointing to a site and its coordinates
 pub struct Site {
+    pub name: String,
     pub chromosome: String,
     pub position: i64,
 }
@@ -31,13 +32,16 @@ pub fn load_map(map: &str, snp_target: String) -> io::Result<HashMap<String, Sit
     let mut site_map: HashMap<String, Site> = HashMap::new();
     // Define targets
     let mut key_idx: usize = 0;
-    let mut chrom_idx: usize = 0;
-    let mut pos_idx: usize = 0;
+    let mut name_idx: usize = 1;
+    let mut chrom_idx: usize = 2;
+    let mut pos_idx: usize = 3;
+    // Set appropriate delimiter based on input name
+    let delimiter = if map.ends_with(".csv") { "," } else { "\t" };
 
     for line in reader.lines() {
         let line = line?;
         if !line.is_empty() {
-            let split_line: Vec<&str> = line.split('\t').collect();
+            let split_line: Vec<&str> = line.split(delimiter).collect();
             if !header_processed {
                 // Validate header first.
                 let validation = validate_header(split_line.clone());
@@ -57,6 +61,10 @@ pub fn load_map(map: &str, snp_target: String) -> io::Result<HashMap<String, Sit
                                 .position(|&value| value == "Name")
                                 .unwrap()
                         };
+                        name_idx = split_line
+                            .iter()
+                            .position(|&value| value == "Name")
+                            .unwrap();
                         chrom_idx = split_line
                             .iter()
                             .position(|&value| value == "Chromosome")
@@ -71,6 +79,7 @@ pub fn load_map(map: &str, snp_target: String) -> io::Result<HashMap<String, Sit
                 header_processed = true;
             } else {
                 let key = split_line[key_idx].to_string();
+                let name = split_line[name_idx].to_string();
                 let chrom = split_line[chrom_idx].to_string();
                 let pos = split_line[pos_idx].parse();
                 // Ensure that pos is an integer
@@ -79,12 +88,12 @@ pub fn load_map(map: &str, snp_target: String) -> io::Result<HashMap<String, Sit
                     Err(e) => panic!("{e}"),
                 };
                 let site = Site {
+                    name,
                     chromosome: chrom,
                     position: pos,
                 };
                 site_map.insert(key, site);
             }
-            println!("{}", line);
         }
     }
 

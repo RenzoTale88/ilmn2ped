@@ -1,10 +1,12 @@
 extern crate clap;
 use clap::{Arg, Command};
+use std::time::Instant;
 
 mod report;
 use report::process_csv;
 
 fn main() {
+    let start = Instant::now();
     let matches = Command::new("ilmn2ped")
         .version("0.1.0")
         .author("Andrea Talenti <andrea.talenti@ed.ac.uk>")
@@ -49,10 +51,15 @@ fn main() {
     let prefix = matches.get_one::<String>("OUTPUT").unwrap();
     let map = matches.get_one::<String>("MAP");
 
-    // // Import a map if it is available
-    // if let Some(map) = map {
-    //     let _variant_map = load_map(map);
-    // }
-
+    // Process the CSV files
     let _ = process_csv(filename, coding, prefix, map);
+
+    let duration = start.elapsed();
+    let hours = duration.as_secs() / 3600;
+    let minutes = (duration.as_secs() % 3600) / 60;
+    let seconds = duration.as_secs() % 60;
+    println!(
+        "Report converted: {:02}:{:02}:{:02}",
+        hours, minutes, seconds
+    );
 }

@@ -1,4 +1,4 @@
 Index	Name	Chromosome	Position	GenTrain Score	SNP	ILMN Strand	Customer Strand NormID
-1	snp1	1	10673082	0.7923	[T/C]	BOT	BOT	0
-2	snp2	1	10723065	0.7742	[A/G]	TOP	BOT	0
-3	snp3	1	11407894	0.7974	[A/G]	TOP	TOP	0
+1	snp01	1	10673082	0.7923	[T/C]	BOT	BOT	0
+2	snp02	1	10723065	0.7742	[A/G]	TOP	BOT	0
+3	snp03	1	11407894	0.7974	[A/G]	TOP	TOP	0

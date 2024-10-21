@@ -15,13 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [stable, windows, macos]
+        build: [ubuntu, windows, macos]
         include:
           - build: macos
             os: macos-latest
           - build: windows
             os: windows-latest
-          - build: stable
+          - build: ubuntu
             os: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -29,5 +29,20 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-    - name: Run on dataset
-      run: cargo install --path . && ilmn2ped test/test.csv
+    - name: Run clippy
+      run: cargo clippy -- -Dwarnings
+
+  exe:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install package
+      run: cargo install --path .
+    - name: Run base
+      run: ilmn2ped test/test.tsv
+    - name: Run with map (tsv)
+      run: ilmn2ped test/test.tsv --map test/map.tsv
+    - name: Run csvs
+      run: ilmn2ped test/test.csv --map test/map.csv
+    - name: Run alternative tsv + map csv
+      run: ilmn2ped test/test2.tsv --map test/map.csv
