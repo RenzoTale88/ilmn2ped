@@ -15,7 +15,8 @@ ilmn2ped --help
 ## Options
 The script takes one positional argument (the input Final report CSV/TSV file), and two optional options:
 1. `--coding`: this can be one of the acceptable Illumina coding formats;
-2. `--output`: this is the root name of the output ped/map files.
+1. `--map`: a [SNP map](#Inputs) file with coordinates of the input sites;
+1. `--output`: this is the root name of the output ped/map files.
 
 The acceptable codings are:
 1. `top` (default)
@@ -26,6 +27,9 @@ The acceptable codings are:
 
 The coding has to be present in the input dataset, with the script failing if it won't be able to find it.
 To find out more details about the coding system of Illumina SNP array refer to the Illumina [website](https://knowledge.illumina.com/microarray/general/microarray-general-reference_material-list/000001489).
+
+### Inputs
+The input SNP map should have the structure detailed in file [map.tsv](./test/map.tsv) or [map.csv](./test/map.csv).
 
 ## License
 This project is licensed under the MIT license. See [LICENSE](./LICENSE) for more details.
