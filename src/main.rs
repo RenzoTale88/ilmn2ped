@@ -8,7 +8,7 @@ use report::process_csv;
 fn main() {
     let start = Instant::now();
     let matches = Command::new("ilmn2ped")
-        .version("0.1.0")
+        .version("1.0.0")
         .author("Andrea Talenti <andrea.talenti@ed.ac.uk>")
         .about("Easy conversion from Illumina manifest CSV file to ped/map")
         .arg(
