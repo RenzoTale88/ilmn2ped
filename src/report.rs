@@ -1,3 +1,4 @@
+use indexmap::IndexSet;
 mod map;
 use map::{load_map, Site};
 use std::collections::HashMap;
@@ -75,7 +76,8 @@ pub fn process_csv(
     // initialize it at the first line of the table.
     let mut sample_name: String = String::new();
     // Vectors of minimal informations
-    let mut variants: Vec<String> = vec![];
+    // let mut variants: Vec<String> = vec![];
+    let mut variants: IndexSet<String> = IndexSet::new();
     // Hashmap of positions to process, if map is provided
     let mut site_metadata: Option<HashMap<String, Site>> = None;
     // Index of key columns
@@ -171,7 +173,8 @@ pub fn process_csv(
         let local_sample = split_line[sample_col_index].to_string();
         let a1: String = split_line[a1_index].to_string().replace("-", "0");
         let a2: String = split_line[a2_index].to_string().replace("-", "0");
-        variants.push(split_line[snp_col_index].to_string());
+        // variants.push(split_line[snp_col_index].to_string());
+        variants.insert(split_line[snp_col_index].to_string());
         sample_name = local_sample.clone();
         write!(pedfile, "{local_sample} {local_sample} 0 0 0 -9 {a1} {a2}")?;
     }
@@ -187,7 +190,8 @@ pub fn process_csv(
         let local_sample = split_line[sample_col_index].to_string();
         let a1: String = split_line[a1_index].replace("-", "0");
         let a2: String = split_line[a2_index].replace("-", "0");
-        variants.push(split_line[snp_col_index].to_string());
+        // variants.push(split_line[snp_col_index].to_string());
+        variants.insert(split_line[snp_col_index].to_string());
         // Check and print if it is none or a sample name
         if sample_name != local_sample {
             writeln!(pedfile)?;
@@ -203,13 +207,7 @@ pub fn process_csv(
     let mut chrom: String = String::from("0");
     let mut name: String;
     let mut pos: i64 = 0;
-    let mut processed: Vec<String> = vec![];
     for site in variants {
-        if !processed.contains(&site) {
-            processed.push(site.clone());
-        } else {
-            break;
-        }
         match site_metadata {
             Some(ref meta) => {
                 chrom = meta[&site].chromosome.clone();
