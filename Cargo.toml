@@ -1,6 +1,6 @@
 [package]
 name = "ilmn2ped"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Andrea Talenti"]
 edition = "2021"
 license = "MIT"
@@ -11,3 +11,4 @@ categories = ["bioinformatics"]
 
 [dependencies]
 clap = "4.5.20"
+indexmap = "1.7"
